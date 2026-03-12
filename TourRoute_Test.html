@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>设备检查</title>
+  <style>
+    * {margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", sans-serif;}
+    body {padding: 20px; background: #f5f5f5;}
+    .device-name {font-size: 24px; margin-bottom: 15px; text-align: center;}
+    .device-img {width: 100%; max-height: 50vh; object-fit: contain; margin: 20px 0; border: 1px solid #eee;}
+    .status-group {margin: 30px 0;}
+    .btn {width: 100%; height: 50px; line-height: 50px; margin: 10px 0; border: none; border-radius: 8px; font-size: 20px; color: #fff;}
+    .btn-normal {background: #4cd964;}
+    .btn-abnormal {background: #ff3b30;}
+    .remark {width: 100%; height: 100px; padding: 10px; font-size: 18px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; resize: none;}
+    .operate-group {margin-top: 30px;}
+    .btn-export {background: #007aff;}
+    .btn-next {background: #5856d6;}
+    .btn:active {opacity: 0.8;}
+  </style>
+</head>
+<body>
+  <div class="device-name">包装机01</div>
+  <img class="device-img" src="https://picsum.photos/800/600" alt="设备图片"> <!-- 用免费测试图片替代本地图 -->
+  <div class="status-group">
+    <button class="btn btn-normal" id="btnNormal">正常</button>
+    <button class="btn btn-abnormal" id="btnAbnormal">异常</button>
+    <textarea class="remark" id="remark" placeholder="若异常，请输入问题描述..."></textarea>
+  </div>
+  <div class="operate-group">
+    <button class="btn" id="btnSave">保存记录</button>
+    <button class="btn btn-export" id="btnExport">导出Excel</button>
+    <button class="btn btn-next" id="btnNext">下一个设备</button>
+  </div>
+
+  <!-- 引入SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.core.min.js"></script>
+  <script>
+    // 全局变量存储当前选择的状态
+    let currentStatus = "";
+    // 状态选择事件
+    document.getElementById('btnNormal').addEventListener('click', () => {
+      currentStatus = "正常";
+      document.getElementById('remark').value = ""; // 正常时清空备注
+      alert('已选择：正常');
+    });
+    document.getElementById('btnAbnormal').addEventListener('click', () => {
+      currentStatus = "异常";
+      alert('已选择：异常，请填写备注');
+    });
+    // 保存记录函数
+    function saveRecord() {
+      if (!currentStatus) {
+        alert('请先选择设备状态！');
+        return;
+      }
+      const record = {
+        设备名称: "包装机01",
+        检查时间: new Date().toLocaleString('zh-CN'),
+        状态: currentStatus,
+        备注: document.getElementById('remark').value || "无"
+      };
+      // 读取本地数据并保存
+      const existingData = localStorage.getItem('deviceCheckData') || '[]';
+      const dataList = JSON.parse(existingData);
+      dataList.push(record);
+      localStorage.setItem('deviceCheckData', JSON.stringify(dataList));
+      alert('保存成功！');
+      // 重置状态
+      currentStatus = "";
+      document.getElementById('remark').value = "";
+    }
+    // 导出Excel函数
+    function exportExcel() {
+      const dataList = JSON.parse(localStorage.getItem('deviceCheckData') || '[]');
+      if (dataList.length === 0) {
+        alert('暂无数据可导出！');
+        return;
+      }
+      const ws = XLSX.utils.json_to_sheet(dataList);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "设备检查记录");
+      const fileName = `设备检查记录_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    }
+    // 下一个设备（测试版仅提示）
+    function nextDevice() {
+      alert('测试版：已切换至【封箱机01】（实际需配置多设备逻辑）');
+    }
+    // 绑定按钮事件
+    document.getElementById('btnSave').addEventListener('click', saveRecord);
+    document.getElementById('btnExport').addEventListener('click', exportExcel);
+    document.getElementById('btnNext').addEventListener('click', nextDevice);
+    // 禁用长按默认行为
+    document.querySelector('.device-img').addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+</body>
+</html>
